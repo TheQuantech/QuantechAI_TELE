@@ -106,7 +106,7 @@ Some things built using this library that might interest you:
 
 <p align="center">
   <a href="https://github.com/yagop/node-telegram-bot-api/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=yagop/node-telegram-bot-api" />
+    <img src="https://contrib.rocks/image?repo=TheQuantech/QuantechAI_TELE" />
   </a>
 </p>
 
