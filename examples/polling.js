@@ -1,92 +1,78 @@
-/**
- * This example demonstrates using polling.
- * It also demonstrates how you would process and send messages.
- */
+require('dotenv').config(); // Untuk memuat API Token dan Groq API Key dari file .env
+const TelegramBot = require('node-telegram-bot-api');
+const Groq = require('groq-sdk');
+const axios = require('axios');
 
+// Inisialisasi bot Telegram
+const TOKEN = process.env.TELEGRAM_TOKEN;
+const bot = new TelegramBot(TOKEN, { polling: true });
 
-const TOKEN = process.env.TELEGRAM_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
-const TelegramBot = require('..');
-const request = require('@cypress/request');
-const options = {
-  polling: true
-};
-const bot = new TelegramBot(TOKEN, options);
+// Inisialisasi Groq AI SDK
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+// Objek untuk menyimpan riwayat percakapan per pengguna
+const chatHistories = {};
 
-// Matches /photo
-bot.onText(/\/photo/, function onPhotoText(msg) {
-  // From file path
-  const photo = `${__dirname}/../test/data/photo.gif`;
-  bot.sendPhoto(msg.chat.id, photo, {
-    caption: "I'm a bot!"
-  });
-});
-
-
-// Matches /audio
-bot.onText(/\/audio/, function onAudioText(msg) {
-  // From HTTP request
-  const url = 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Example.ogg';
-  const audio = request(url);
-  bot.sendAudio(msg.chat.id, audio);
-});
-
-
-// Matches /love
-bot.onText(/\/love/, function onLoveText(msg) {
-  const opts = {
-    reply_to_message_id: msg.message_id,
-    reply_markup: JSON.stringify({
-      keyboard: [
-        ['Yes, you are the bot of my life ❤'],
-        ['No, sorry there is another one...']
-      ]
-    })
-  };
-  bot.sendMessage(msg.chat.id, 'Do you love me?', opts);
-});
-
-
-// Matches /echo [whatever]
-bot.onText(/\/echo (.+)/, function onEchoText(msg, match) {
-  const resp = match[1];
-  bot.sendMessage(msg.chat.id, resp);
-});
-
-
-// Matches /editable
-bot.onText(/\/editable/, function onEditableText(msg) {
-  const opts = {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: 'Edit Text',
-            // we shall check for this value when we listen
-            // for "callback_query"
-            callback_data: 'edit'
-          }
-        ]
-      ]
-    }
-  };
-  bot.sendMessage(msg.from.id, 'Original Text', opts);
-});
-
-
-// Handle callback queries
-bot.on('callback_query', function onCallbackQuery(callbackQuery) {
-  const action = callbackQuery.data;
-  const msg = callbackQuery.message;
-  const opts = {
-    chat_id: msg.chat.id,
-    message_id: msg.message_id,
-  };
-  let text;
-
-  if (action === 'edit') {
-    text = 'Edited Text';
+// Fungsi untuk memanggil API Groq
+// Modifikasi fungsi untuk mengirim hanya sebagian dari riwayat
+async function getGroqChatCompletion(messages) {
+  try {
+      // Batasi hanya 10 pesan terakhir (user dan AI)
+      const recentMessages = messages.slice(-20); // 10 pesan user dan 10 pesan AI
+      return await groq.chat.completions.create({
+          messages: [
+              { role: 'system', content: 'Anda adalah asisten AI yang ramah dan menggunakan bahasa Indonesia.' },
+              ...recentMessages
+          ],
+          model: "llama3-8b-8192", // Model yang Anda inginkan
+          temperature: 0.7,
+          max_tokens: 1500,
+          top_p: 1.0
+      });
+  } catch (error) {
+      console.error("Error calling Groq API:", error);
+      throw error;
   }
+}
 
-  bot.editMessageText(text, opts);
+
+// Ketika menerima pesan di Telegram
+bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    const messageText = msg.text;
+
+    console.log(`Received message from ${chatId}: ${messageText}`);
+
+    // Inisialisasi riwayat percakapan jika belum ada untuk chatId ini
+    if (!chatHistories[chatId]) {
+        chatHistories[chatId] = [];
+    }
+
+    // Tambahkan pesan pengguna ke riwayat percakapan
+    chatHistories[chatId].push({ role: 'user', content: messageText });
+
+    try {
+        // Kirim seluruh riwayat percakapan ke Groq AI dan dapatkan balasan
+        const chatCompletion = await getGroqChatCompletion(chatHistories[chatId]);
+        const aiResponse = chatCompletion.choices[0]?.message?.content || "Maaf, saya tidak mengerti.";
+
+        // Tambahkan respons AI ke riwayat percakapan
+        chatHistories[chatId].push({ role: 'assistant', content: aiResponse });
+
+        // Kirim balasan AI kembali ke pengguna Telegram
+        await bot.sendMessage(chatId, aiResponse);
+        console.log(aiResponse)
+    } catch (error) {
+        console.error(`Error processing message from ${chatId}:`, error);
+        await bot.sendMessage(chatId, "Terjadi kesalahan saat memproses permintaan Anda.");
+    }
+});
+
+// Menangani exception yang tidak tertangani
+process.on("uncaughtException", (err) => {
+    console.log("Unhandled Exception", err);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+    console.log("Unhandled Rejection", reason);
 });

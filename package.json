@@ -32,11 +32,15 @@
     "@cypress/request": "^3.0.1",
     "@cypress/request-promise": "^5.0.0",
     "array.prototype.findindex": "^2.0.2",
+    "axios": "^1.7.7",
     "bl": "^1.2.3",
     "debug": "^3.2.7",
+    "dotenv": "^16.4.5",
     "eventemitter3": "^3.0.0",
     "file-type": "^3.9.0",
+    "groq-sdk": "^0.7.0",
     "mime": "^1.6.0",
+    "node-telegram-bot-api": "^0.66.0",
     "pump": "^2.0.0"
   },
   "devDependencies": {
