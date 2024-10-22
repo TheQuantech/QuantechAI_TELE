@@ -1,20 +1,20 @@
-# Menggunakan base image Node.js
-FROM node:14
+# Menggunakan Node.js versi 20 sebagai base image
+FROM node:20
 
 # Menetapkan direktori kerja di dalam container
 WORKDIR /usr/src/app
 
-# Menyalin package.json dan package-lock.json
+# Menyalin package.json dan package-lock.json (jika ada)
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Menyalin seluruh isi proyek ke dalam container
+# Menyalin seluruh proyek ke dalam container
 COPY . .
 
-# Menentukan port yang akan digunakan
+# Menentukan port yang akan digunakan oleh aplikasi
 EXPOSE 3000
 
-# Menjalankan aplikasi
+# Jalankan aplikasi
 CMD ["npm", "start"]

@@ -5,9 +5,8 @@
   "main": "./index.js",
   "directories": {
     "example": "examples",
-    "test": "test",
-    "start":"examples/polling.js"
-  },
+    "test": "test"
+   },
   "keywords": [
     "telegram",
     "telegram bot",
@@ -15,15 +14,16 @@
     "bot"
   ],
   "scripts": {
-    "gen-doc": "echo 'WARNING: `npm run gen-doc` is deprecated. Use `npm run doc` instead.' && npm run doc",
-    "doc": "jsdoc2md --files src/telegram.js --template doc/api.hbs > doc/api.md",
-    "build": "babel -d ./lib src",
-    "prepublishOnly": "npm run build && npm run gen-doc",
-    "eslint": "eslint ./src ./test ./examples",
-    "mocha": "mocha",
-    "pretest": "npm run build",
-    "test": "npm run eslint && istanbul cover ./node_modules/mocha/bin/_mocha"
-  },
+  "start": "node examples/polling.js",
+  "gen-doc": "echo 'WARNING: `npm run gen-doc` is deprecated. Use `npm run doc` instead.' && npm run doc",
+  "doc": "jsdoc2md --files src/telegram.js --template doc/api.hbs > doc/api.md",
+  "build": "babel -d ./lib src",
+  "prepublishOnly": "npm run build && npm run gen-doc",
+  "eslint": "eslint ./src ./test ./examples",
+  "mocha": "mocha",
+  "pretest": "npm run build",
+  "test": "npm run eslint && istanbul cover ./node_modules/mocha/bin/_mocha"
+},
   "author": "Yago Pérez <yagoperezs@gmail.com>",
   "license": "MIT",
   "engines": {
